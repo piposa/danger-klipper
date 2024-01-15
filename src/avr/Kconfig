@@ -11,11 +11,19 @@ config AVR_SELECT
     select HAVE_GPIO_I2C
     select HAVE_GPIO_HARD_PWM
     select HAVE_STRICT_TIMING
-    select HAVE_LIMITED_CODE_SIZE if MACH_atmega168 || MACH_atmega328 || MACH_atmega328p
+    select HAVE_LIMITED_CODE_SIZE if MACH_atmega168 || MACH_atmega328 || MACH_atmega328p || MACH_atmega32u4
 
 config BOARD_DIRECTORY
     string
     default "avr"
+
+#
+# disabled due to outdated compiler but not removed from the code
+# to be enabled again when/if debian updates the compiler
+#
+config MACH_atmega168
+    bool
+    default n
 
 choice
     prompt "Processor model"
@@ -37,8 +45,6 @@ choice
         bool "atmega328p"
     config MACH_atmega328
         bool "atmega328"
-    config MACH_atmega168
-        bool "atmega168"
 endchoice
 
 config MCU
