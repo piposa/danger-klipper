@@ -14,6 +14,10 @@ class error(Exception):
     pass
 
 
+# if the mcu hasnt been built with ADC, this constant doesn't exist
+DEFAULT_ADC_MAX = 4095
+DEFAULT_PWM_MAX = 0
+
 ######################################################################
 # Command transmit helper classes
 ######################################################################
@@ -548,7 +552,10 @@ class MCU_pwm:
         if mdur_ticks >= 1 << 31:
             raise pins.error("PWM pin max duration too large")
         if self._hardware_pwm:
-            self._pwm_max = self._mcu.get_constant_float("PWM_MAX")
+            try:
+                self._pwm_max = self._mcu.get_constant_float("PWM_MAX")
+            except:
+                self._pwm_max = DEFAULT_PWM_MAX
             if self._is_static:
                 self._mcu.add_config_cmd(
                     "set_pwm_out pin=%s cycle_ticks=%d value=%d"
@@ -702,7 +709,10 @@ class MCU_adc:
         )
         clock = self._mcu.get_query_slot(self._oid)
         sample_ticks = self._mcu.seconds_to_clock(self._sample_time)
-        mcu_adc_max = self._mcu.get_constant_float("ADC_MAX")
+        try:
+            mcu_adc_max = self._mcu.get_constant_float("ADC_MAX")
+        except:
+            mcu_adc_max = DEFAULT_ADC_MAX
         max_adc = self._sample_count * mcu_adc_max
         self._inv_max_adc = 1.0 / max_adc
         self._report_clock = self._mcu.seconds_to_clock(self._report_time)
