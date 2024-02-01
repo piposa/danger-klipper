@@ -21,3 +21,4 @@ src-$(CONFIG_WANT_ADXL345) += sensor_adxl345.c
 src-$(CONFIG_WANT_MPU9250) += sensor_mpu9250.c
 src-$(CONFIG_WANT_LIS2DW) += sensor_lis2dw.c
 src-$(CONFIG_WANT_ANGLE_SENSOR) += sensor_angle.c
+src-$(CONFIG_NEED_SENSOR_BULK) += sensor_bulk.c

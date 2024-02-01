@@ -64,6 +64,10 @@ If I want my printer to light itself on fire, I should be able to make my printe
 
 - [adxl345: improve ACCELEROMETER_QUERY command](https://github.com/DangerKlippers/danger-klipper/pull/124)
 
+- [extruder: add flag to use the PA constant from a trapq move vs a cached value](https://github.com/DangerKlippers/danger-klipper/pull/132)
+
+- [force_move: turn on by default](https://github.com/DangerKlippers/danger-klipper/pull/135)
+
 If you're feeling adventurous, take a peek at the extra features in the bleeding-edge branch:
 
 - [dmbutyugin's advanced-features branch](https://github.com/DangerKlippers/danger-klipper/pull/69) [dmbutyugin/advanced-features](https://github.com/dmbutyugin/klipper/commits/advanced-features)
@@ -77,6 +81,8 @@ If you're feeling adventurous, take a peek at the extra features in the bleeding
 - [input_shaper: smooth input shapers](https://github.com/DangerKlippers/danger-klipper/pull/69)
 
 - [input_shaper: new print_ringing_tower utility](https://github.com/DangerKlippers/danger-klipper/pull/69)
+
+- [Independent X & Y Acceleration and velocity settings](https://github.com/DangerKlippers/danger-klipper/pull/4)
 
 ## Switch to Danger Klipper
 

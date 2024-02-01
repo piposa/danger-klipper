@@ -8,6 +8,25 @@ All dates in this document are approximate.
 
 ## Changes
 
+20240128: `printer.kinematics` now accepts `limited_cartesian` and
+`limited_cartesian` and `limited_corexy` that enables `max_{x,y}_accel` and
+`max_{x,y}_velocity` (only for `limited_cartesian`). In the future, this
+functionality may be moved into the original kinematics module (as optional
+settings).
+
+20240123: The output_pin SET_PIN CYCLE_TIME parameter has been
+removed. Use the new
+[pwm_cycle_time](Config_Reference.md#pwm_cycle_time) module if it is
+necessary to dynamically change a pwm pin's cycle time.
+
+20240123: The output_pin `maximum_mcu_duration` parameter is
+deprecated. Use a [pwm_tool config section](Config_Reference.md#pwm_tool)
+instead. The option will be removed in the near future.
+
+20240123: The output_pin `static_value` parameter is deprecated.
+Replace with `value` and `shutdown_value` parameters.  The option will
+be removed in the near future.
+
 20231216: The `[hall_filament_width_sensor]` is changed to trigger filament runout
 when the thickness of the filament exceeds `max_diameter`. The maximum diameter
 defaults to `default_nominal_filament_diameter + max_difference`. See
