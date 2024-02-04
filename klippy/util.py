@@ -266,6 +266,10 @@ def get_git_version(from_file=True):
     return git_info
 
 
+class error(Exception):
+    pass
+
+
 class FakeConfig:
     _dict = None
     printer = None
@@ -278,24 +282,42 @@ class FakeConfig:
         logging.info(kwargs)
 
     def getint(self, key, default=None, **kwargs):
-        val = self._dict.get(key, default)
+        val = int(self._dict.get(key, default))
+        logging.info(f"INT {key} : {val} BALLS")
+        if default is None and key not in self._dict:
+            raise error("Key not found in self._dict")
         return val
 
     def getlist(self, key, default=None, **kwargs):
         val = self._dict.get(key, default)
+        if default is None and key not in self._dict:
+            raise error("Key not found in self._dict")
         return val
 
     def getboolean(self, key, default=None, **kwargs):
-        val = self._dict.get(key, default)
+        val = bool(self._dict.get(key, default))
+        if default is None and key not in self._dict:
+            raise error("Key not found in self._dict")
+        logging.info(f"BOOL {key} : {val} BALLS")
         return val
 
     def getfloat(self, key, default=None, **kwargs):
         val = self._dict.get(key, default)
+        if default is None and key not in self._dict:
+            raise error("Key not found in self._dict")
+        logging.info(f"FLOAT {key} : {val} BALLS")
         return val
 
     def get(self, key, default=None, **kwargs):
         val = self._dict.get(key, default)
+        if default is None and key not in self._dict:
+            raise error("Key not found in self._dict")
+        logging.info(f"get {key} : {val} BALLS")
         return val
+
+    def getchoice(self, option_name, choices):
+        choice = self.get(option_name)
+        return choices.get(choice)
 
     def getsection(self, section):
         return self

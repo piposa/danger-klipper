@@ -57,6 +57,10 @@ class ChamberModule:
         self.fan_idle_speed = config.getfloat(
             "fan_idle_speed", self.fan_speed, minval=0.0, maxval=1.0
         )
+        self.fan_off_below = config.getfloat(
+            "fan_off_below", default=None, minval=0.0, maxval=1.0
+        )
+
         self.stepper_names = None
 
         self.hconfig = util.FakeConfig(
@@ -95,6 +99,7 @@ class ChamberModule:
             idle_timeout=self.fan_idle_timeout,
             idle_speed=self.fan_idle_speed,
             stepper=self.stepper_names,
+            off_below=self.fan_off_below,
         )
 
     def get_max_power(self):
