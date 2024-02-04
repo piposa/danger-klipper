@@ -264,3 +264,44 @@ def get_git_version(from_file=True):
     if from_file:
         git_info["version"] = get_version_from_file(klippy_src)
     return git_info
+
+
+class FakeConfig:
+    _dict = None
+    printer = None
+    section = None
+
+    def __init__(self, printer, section, **kwargs):
+        self.printer = printer
+        self.section = section
+        self._dict = kwargs
+        logging.info(kwargs)
+
+    def getint(self, key, default=None, **kwargs):
+        val = self._dict.get(key, default)
+        return val
+
+    def getlist(self, key, default=None, **kwargs):
+        val = self._dict.get(key, default)
+        return val
+
+    def getboolean(self, key, default=None, **kwargs):
+        val = self._dict.get(key, default)
+        return val
+
+    def getfloat(self, key, default=None, **kwargs):
+        val = self._dict.get(key, default)
+        return val
+
+    def get(self, key, default=None, **kwargs):
+        val = self._dict.get(key, default)
+        return val
+
+    def getsection(self, section):
+        return self
+
+    def get_printer(self):
+        return self.printer
+
+    def get_name(self):
+        return self.section
