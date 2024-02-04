@@ -282,36 +282,36 @@ class FakeConfig:
         logging.info(kwargs)
 
     def getint(self, key, default=None, **kwargs):
-        val = int(self._dict.get(key, default))
+        val = self._dict.get(key, default)
         logging.info(f"INT {key} : {val} BALLS")
-        if default is None and key not in self._dict:
-            raise error("Key not found in self._dict")
+        if key not in self._dict:
+            raise error(f"{key} not found in self._dict")
         return val
 
     def getlist(self, key, default=None, **kwargs):
         val = self._dict.get(key, default)
-        if default is None and key not in self._dict:
-            raise error("Key not found in self._dict")
+        if key not in self._dict:
+            raise error(f"{key} not found in self._dict")
         return val
 
     def getboolean(self, key, default=None, **kwargs):
-        val = bool(self._dict.get(key, default))
-        if default is None and key not in self._dict:
-            raise error("Key not found in self._dict")
+        val = self._dict.get(key, default)
+        if key not in self._dict:
+            raise error(f"{key} not found in self._dict")
         logging.info(f"BOOL {key} : {val} BALLS")
         return val
 
     def getfloat(self, key, default=None, **kwargs):
         val = self._dict.get(key, default)
-        if default is None and key not in self._dict:
-            raise error("Key not found in self._dict")
+        if key not in self._dict:
+            raise error(f"{key} not found in self._dict")
         logging.info(f"FLOAT {key} : {val} BALLS")
         return val
 
     def get(self, key, default=None, **kwargs):
         val = self._dict.get(key, default)
-        if default is None and key not in self._dict:
-            raise error("Key not found in self._dict")
+        if key not in self._dict:
+            raise error(f"{key} not found in self._dict")
         logging.info(f"get {key} : {val} BALLS")
         return val
 
@@ -320,7 +320,10 @@ class FakeConfig:
         return choices.get(choice)
 
     def getsection(self, section):
-        return self
+        if section == self.section_name:
+            return self
+        else:
+            return self.real_config.getsection(section)
 
     def get_printer(self):
         return self.printer

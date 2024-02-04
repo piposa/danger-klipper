@@ -5,7 +5,7 @@ import util
 class ChamberModule:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.section = config.get_name()
+        self.section_name = config.get_name()
 
         self.gcode_id = config.get("gcode_id")
         self.heater_pin = config.get("heater_pin")
@@ -28,6 +28,25 @@ class ChamberModule:
         self.pid_Ki = config.getfloat("pid_Ki", 0.0, minval=0.0)
         self.pid_Kd = config.getfloat("pid_Kd", 0.0, minval=0.0)
         self.pwm_cycle_time = config.getfloat("pwm_cycle_time", 0.0, minval=0.0)
+        self.chamber_sensor_pullup = config.getfloat(
+            "pullup_resistor", 4700.0, above=0.0
+        )
+        self.chamber_sensor_inline_resistor = config.getfloat(
+            "inline_resistor", 0.0, minval=0.0
+        )
+        self.min_extrude_temp = config.getfloat(
+            "min_extrude_temp",
+            170.0,
+            minval=self.chamber_min_temp,
+            maxval=self.chamber_max_temp,
+        )
+        self.hysteresis = config.getfloat("hysteresis", 5.0, minval=0.0)
+        self.max_error = config.getfloat("max_error", 120.0, minval=0.0)
+        self.heating_gain = config.getfloat("heating_gain", 2.0, above=0.0)
+        default_gain_time = 60.0
+        self.check_gain_time = config.getfloat(
+            "check_gain_time", default_gain_time, minval=1.0
+        )
 
         self.fan_pin = config.get("fan_pin")
         self.fan_max_power = config.getfloat(
@@ -61,11 +80,12 @@ class ChamberModule:
             "fan_off_below", default=None, minval=0.0, maxval=1.0
         )
 
+        self.heater = config.get("heater", "asdas")
         self.stepper_names = None
 
         self.hconfig = util.FakeConfig(
             self.printer,
-            self.section,
+            self.section_name,
             gcode_id=self.gcode_id,
             heater_pin=self.heater_pin,
             max_power=self.chamber_max_power,
@@ -79,11 +99,18 @@ class ChamberModule:
             pid_Ki=self.pid_Ki,
             pid_Kd=self.pid_Kd,
             pwm_cycle_time=self.pwm_cycle_time,
+            pullup_resistor=self.chamber_sensor_pullup,
+            inline_resistor=self.chamber_sensor_inline_resistor,
+            min_extrude_temp=self.min_extrude_temp,
+            hysteresis=self.hysteresis,
+            max_error=self.max_error,
+            heating_gain=self.heating_gain,
+            check_gain_time=self.check_gain_time,
         )
 
         self.fconfig = util.FakeConfig(
             self.printer,
-            self.section,
+            self.section_name,
             pin=self.fan_pin,
             max_power=self.fan_max_power,
             shutdown_speed=self.fan_shutdown_speed,
@@ -100,6 +127,7 @@ class ChamberModule:
             idle_speed=self.fan_idle_speed,
             stepper=self.stepper_names,
             off_below=self.fan_off_below,
+            heater=self.heater,
         )
 
     def get_max_power(self):
