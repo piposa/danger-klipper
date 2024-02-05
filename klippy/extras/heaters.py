@@ -5,7 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import os
 import threading
-
+import logging
 
 ######################################################################
 # Heater
@@ -423,6 +423,7 @@ class PrinterHeaters:
             raise config.error("Heater %s already registered" % (heater_name,))
         # Setup sensor
         sensor = self.setup_sensor(config)
+        logging.error("sensor: %s", sensor)
         # Create heater
         self.heaters[heater_name] = heater = Heater(config, sensor)
         self.register_sensor(config, heater, gcode_id)

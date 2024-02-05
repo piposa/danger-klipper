@@ -7,6 +7,7 @@ class ChamberModule:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.full_section = config.get_name()
+        self.fake_full_section = self.full_section
         self.gcode_id = config.get("gcode_id")
         self.heater_pin = config.get("heater_pin")
         self.chamber_max_power = config.getfloat(
@@ -85,9 +86,12 @@ class ChamberModule:
         ]
         self.stepper_names = "extruder"
 
+        cfansection = "controller_fan " + self.full_section.split()[-1]
+        hfansection = "heater_generic " + self.full_section.split()[-1]
+
         self.hconfig = util.FakeConfig(
             self.printer,
-            self.full_section,
+            hfansection,
             config,
             gcode_id=self.gcode_id,
             heater_pin=self.heater_pin,
@@ -113,7 +117,7 @@ class ChamberModule:
 
         self.fconfig = util.FakeConfig(
             self.printer,
-            self.full_section,
+            cfansection,
             config,
             pin=self.fan_pin,
             max_power=self.fan_max_power,
@@ -145,8 +149,9 @@ def load_config_prefix(config):
     obj = ChamberModule(config)
     logging.error("hit load_config_prefix")
     pheaters = config.get_printer().load_object(obj.hconfig, "heaters")
+    logging.error(f"setting up heater {pheaters}")
     pheaters.setup_heater(obj.hconfig)
-
+    logging.error("heater has been setup")
     config.get_printer().add_object(
         "controller_fan", controller_fan.ControllerFan(obj.fconfig)
     )
