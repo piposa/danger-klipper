@@ -286,36 +286,40 @@ class FakeConfig:
 
     def getint(self, key, default=None, **kwargs):
         val = self._dict.get(key, default)
-        logging.info(f"INT {key} : {val} BALLS")
         if key not in self._dict:
             raise error(f"{key} not found in self._dict")
+        logging.info(f"INT {key} : {val}")
         return val
 
     def getlist(self, key, default=None, **kwargs):
         val = self._dict.get(key, default)
         if key not in self._dict:
             raise error(f"{key} not found in self._dict")
+        if not isinstance(val, list):
+            return [
+                val,
+            ]
         return val
 
     def getboolean(self, key, default=None, **kwargs):
         val = self._dict.get(key, default)
         if key not in self._dict:
             raise error(f"{key} not found in self._dict")
-        logging.info(f"BOOL {key} : {val} BALLS")
+        logging.info(f"BOOL {key} : {val}")
         return val
 
     def getfloat(self, key, default=None, **kwargs):
         val = self._dict.get(key, default)
         if key not in self._dict:
             raise error(f"{key} not found in self._dict")
-        logging.info(f"FLOAT {key} : {val} BALLS")
+        logging.info(f"FLOAT {key} : {val}")
         return val
 
     def get(self, key, default=None, **kwargs):
         val = self._dict.get(key, default)
         if key not in self._dict:
             raise error(f"{key} not found in self._dict")
-        logging.info(f"get {key} : {val} BALLS")
+        logging.info(f"get {key} : {val}")
         return val
 
     def getchoice(self, option_name, choices):
