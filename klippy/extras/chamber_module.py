@@ -5,7 +5,7 @@ import util
 class ChamberModule:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.section_name = config.get_name()
+        self.full_section = config.get_name()
 
         self.gcode_id = config.get("gcode_id")
         self.heater_pin = config.get("heater_pin")
@@ -80,12 +80,13 @@ class ChamberModule:
             "fan_off_below", default=None, minval=0.0, maxval=1.0
         )
 
-        self.heater = config.get("heater", "asdas")
+        self.heater = config.get("heater", self.full_section.split()[-1])
         self.stepper_names = None
 
         self.hconfig = util.FakeConfig(
             self.printer,
-            self.section_name,
+            self.full_section,
+            config,
             gcode_id=self.gcode_id,
             heater_pin=self.heater_pin,
             max_power=self.chamber_max_power,
@@ -110,7 +111,8 @@ class ChamberModule:
 
         self.fconfig = util.FakeConfig(
             self.printer,
-            self.section_name,
+            self.full_section,
+            config,
             pin=self.fan_pin,
             max_power=self.fan_max_power,
             shutdown_speed=self.fan_shutdown_speed,

@@ -275,11 +275,14 @@ class FakeConfig:
     printer = None
     section = None
 
-    def __init__(self, printer, section, **kwargs):
+    def __init__(self, printer, full_section, config, **kwargs):
+        self.real_config = config
         self.printer = printer
-        self.section = section
+        self.full_section = full_section
+        self.section_name = full_section.split()[0]
         self._dict = kwargs
-        logging.info(kwargs)
+        logging.info(full_section)
+        logging.info(self.section_name)
 
     def getint(self, key, default=None, **kwargs):
         val = self._dict.get(key, default)
@@ -329,4 +332,4 @@ class FakeConfig:
         return self.printer
 
     def get_name(self):
-        return self.section
+        return self.full_section
