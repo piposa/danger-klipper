@@ -839,6 +839,22 @@ anchor_z:
 #   These parameters must be provided.
 ```
 
+### Hybrid CoreXY
+
+Only parameters specific to Hybrid Corexy printers are described here -
+see [common kinematic settings](#common-kinematic-settings) for
+available parameters.
+https://github.com/HelgeKeck/klipper_hybrid_corexy
+
+
+```
+[printer]
+kinematics: ratos_hybrid_corexy
+
+[ratos_hybrid_corexy]
+inverted: false
+```
+
 ### None Kinematics
 
 It is possible to define a special "none" kinematics to disable
