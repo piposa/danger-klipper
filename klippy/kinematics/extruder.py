@@ -3,7 +3,6 @@
 # Copyright (C) 2016-2022  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import math, logging
 import stepper, chelper
 
 
@@ -229,32 +228,19 @@ class PrinterExtruder:
             config.deprecate("shared_heater")
             self.heater = pheaters.lookup_heater(shared_heater)
         # Setup kinematic checks
-        self.nozzle_diameter = config.getfloat("nozzle_diameter", above=0.0)
-        filament_diameter = config.getfloat("filament_diameter", above=0.0)
-        if filament_diameter < self.nozzle_diameter:
-            config_file.warn(
-                "config",
-                f"Nozzle diameter ({self.nozzle_diameter}mm) is larger than filament diameter ({filament_diameter}mm).",
-                "Invalid profile name",
-            )
-        self.filament_area = math.pi * (filament_diameter * 0.5) ** 2
-        def_max_cross_section = 4.0 * self.nozzle_diameter**2
-        def_max_extrude_ratio = def_max_cross_section / self.filament_area
-        max_cross_section = config.getfloat(
-            "max_extrude_cross_section", def_max_cross_section, above=0.0
-        )
-        self.max_extrude_ratio = max_cross_section / self.filament_area
-        logging.info("Extruder max_extrude_ratio=%.6f", self.max_extrude_ratio)
+        self.nozzle_diameter = config.getfloat("nozzle_diameter")
+        filament_diameter = config.getfloat("filament_diameter")
+        max_cross_section = config.getfloat("max_extrude_cross_section")
         toolhead = self.printer.lookup_object("toolhead")
         max_velocity, max_accel = toolhead.get_max_velocity()
         self.max_e_velocity = config.getfloat(
             "max_extrude_only_velocity",
-            max_velocity * def_max_extrude_ratio,
+            max_velocity,
             above=0.0,
         )
         self.max_e_accel = config.getfloat(
             "max_extrude_only_accel",
-            max_accel * def_max_extrude_ratio,
+            max_accel,
             above=0.0,
         )
         self.max_e_dist = config.getfloat(
@@ -327,33 +313,10 @@ class PrinterExtruder:
             )
         if (not move.axes_d[0] and not move.axes_d[1]) or axis_r < 0.0:
             # Extrude only move (or retraction move) - limit accel and velocity
-            if abs(move.axes_d[3]) > self.max_e_dist:
-                raise self.printer.command_error(
-                    "Extrude only move too long (%.3fmm vs %.3fmm)\n"
-                    "See the 'max_extrude_only_distance' config"
-                    " option for details" % (move.axes_d[3], self.max_e_dist)
-                )
             inv_extrude_r = 1.0 / abs(axis_r)
             move.limit_speed(
                 self.max_e_velocity * inv_extrude_r,
                 self.max_e_accel * inv_extrude_r,
-            )
-        elif axis_r > self.max_extrude_ratio:
-            if move.axes_d[3] <= self.nozzle_diameter * self.max_extrude_ratio:
-                # Permit extrusion if amount extruded is tiny
-                return
-            area = axis_r * self.filament_area
-            logging.debug(
-                "Overextrude: %s vs %s (area=%.3f dist=%.3f)",
-                axis_r,
-                self.max_extrude_ratio,
-                area,
-                move.move_d,
-            )
-            raise self.printer.command_error(
-                "Move exceeds maximum extrusion (%.3fmm^2 vs %.3fmm^2)\n"
-                "See the 'max_extrude_cross_section' config option for details"
-                % (area, self.max_extrude_ratio * self.filament_area)
             )
 
     def calc_junction(self, prev_move, move):
