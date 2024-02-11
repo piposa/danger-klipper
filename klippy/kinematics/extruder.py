@@ -230,7 +230,7 @@ class PrinterExtruder:
             self.heater = pheaters.lookup_heater(shared_heater)
         # Setup kinematic checks
         self.nozzle_diameter = config.getfloat("nozzle_diameter", above=0.0)
-        filament_diameter = config.getfloat("filament_diameter")
+        filament_diameter = config.getfloat("filament_diameter", above=0.0)
         if filament_diameter < self.nozzle_diameter:
             config_file.warn(
                 "config",
