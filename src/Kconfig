@@ -4,7 +4,6 @@ mainmenu "Klipper Firmware Configuration"
 
 config LOW_LEVEL_OPTIONS
     bool "Enable extra low-level configuration options"
-    default y
     help
         Enable low-level configuration options that (if modified) may
         result in a build that does not function correctly.
@@ -80,96 +79,161 @@ config USB_SERIAL_NUMBER
 
 menu "USB ids"
     depends on USB && LOW_LEVEL_OPTIONS
-config USB_VENDOR_ID
-    hex "USB vendor ID" if USBSERIAL
-config USB_DEVICE_ID
-    hex "USB device ID" if USBSERIAL
-config USB_SERIAL_NUMBER_CHIPID
-    bool "USB serial number from CHIPID" if HAVE_CHIPID
-config USB_SERIAL_NUMBER
-    string "USB serial number" if !USB_SERIAL_NUMBER_CHIPID
+    config USB_VENDOR_ID
+        hex "USB vendor ID" if USBSERIAL
+    config USB_DEVICE_ID
+        hex "USB device ID" if USBSERIAL
+    config USB_SERIAL_NUMBER_CHIPID
+        bool "USB serial number from CHIPID" if HAVE_CHIPID
+    config USB_SERIAL_NUMBER
+        string "USB serial number" if !USB_SERIAL_NUMBER_CHIPID
 endmenu
 
-#
-#  Optional features that can be disabled (for devices with small flash sizes)
-#
-menu "Optional features (to reduce code size)"
-    depends on HAVE_LIMITED_CODE_SIZE || LOW_LEVEL_OPTIONS
+# Generic configuration options for optional features that can be disabled
 config WANT_DEBUG
-    bool "Support MCU Debug Commands"
+    bool
+    default n if HAVE_LIMITED_CODE_SIZE
     default y
 config WANT_GPIO_ADC
-    bool "Support ADC Devices"
+    bool
     depends on HAVE_GPIO_ADC
     default y
 config WANT_GPIO_I2C
-    bool "Support I2C Devices"
+    bool
     depends on HAVE_GPIO_I2C
     default y
 config WANT_SOFTWARE_I2C
-    bool "Support Software Based I2C \"bit-banging\""
+    bool
     depends on HAVE_GPIO && WANT_GPIO_I2C
+    default n if HAVE_LIMITED_CODE_SIZE
     default y
 config WANT_MPU9250
-    bool "Support MPU9250 Accelerometer"
+    bool
     depends on WANT_GPIO_I2C
+    default n if HAVE_LIMITED_CODE_SIZE
     default y
 config WANT_GPIO_SPI
-    bool "Support SPI Devices"
+    bool
     depends on HAVE_GPIO_SPI
     default y
 config WANT_THERMOCOUPLE
-    bool "Support External Thermocouple SPI Devices"
+    bool
     depends on WANT_GPIO_SPI
+    default n if HAVE_LIMITED_CODE_SIZE
     default y
 config WANT_ADXL345
-    bool "Support ADXL345 Accelerometer"
+    bool
     depends on WANT_GPIO_SPI
+    default n if HAVE_LIMITED_CODE_SIZE
     default y
 config WANT_LIS2DW
-    bool "Support LIS2DW 3-axis Accelerometer"
+    bool
     depends on WANT_GPIO_SPI
+    default n if HAVE_LIMITED_CODE_SIZE
     default y
 config WANT_ANGLE_SENSOR
-    bool "Support Angle Sensors (A1333, AS5047D, TLE5012B)"
+    bool
     depends on WANT_GPIO_SPI
+    default n if HAVE_LIMITED_CODE_SIZE
     default y
 config WANT_SOFTWARE_SPI
-    bool "Support Software Based SPI \"bit-banging\""
+    bool
     depends on HAVE_GPIO && WANT_GPIO_SPI
+    default n if HAVE_LIMITED_CODE_SIZE
     default y
 config WANT_GPIO_SDIO
-    bool "Support SDIO Devices"
+    bool
     depends on HAVE_GPIO_SDIO
+    default n if HAVE_LIMITED_CODE_SIZE
     default y
 config WANT_GPIO_HARD_PWM
-    bool "Support Hardware PWM"
+    bool
     depends on HAVE_GPIO_HARD_PWM
     default y
 config WANT_BUTTONS
-    bool "Support GPIO Buttons"
+    bool
     depends on HAVE_GPIO
     default y
 config WANT_TMCUART
-    bool "Support TMC UART"
+    bool
     depends on HAVE_GPIO
     default y
 config WANT_NEOPIXEL
-    bool "Support NeoPixels"
+    bool
     depends on HAVE_GPIO
+    default n if HAVE_LIMITED_CODE_SIZE
     default y
 config WANT_PULSE_COUNTER
-    bool "Support Pulse Counter"
+    bool
     depends on HAVE_GPIO
+    default n if HAVE_LIMITED_CODE_SIZE
     default y
 config WANT_DISPLAYS
-    bool "Support LCD Devices"
+    bool
     depends on HAVE_GPIO
+    default n if HAVE_LIMITED_CODE_SIZE
     default y
 config NEED_SENSOR_BULK
     bool
     depends on WANT_LIS2DW || WANT_ADXL345
     default y
+
+#  Menu for optional features that can be disabled
+menu "Optional features (to reduce code size)"
+    depends on LOW_LEVEL_OPTIONS
+    config WANT_DEBUG
+        bool "Support MCU Debug Commands"
+    config WANT_GPIO_ADC
+        bool "Support ADC Devices"
+        depends on HAVE_GPIO_ADC
+    config WANT_GPIO_I2C
+        bool "Support I2C Devices"
+        depends on HAVE_GPIO_I2C
+    config WANT_SOFTWARE_I2C
+        bool "Support Software Based I2C \"bit-banging\""
+        depends on HAVE_GPIO && WANT_GPIO_I2C
+    config WANT_MPU9250
+        bool "Support MPU9250 Accelerometer"
+        depends on WANT_GPIO_I2C
+    config WANT_GPIO_SPI
+        bool "Support SPI Devices"
+        depends on HAVE_GPIO_SPI
+    config WANT_THERMOCOUPLE
+        bool "Support External Thermocouple SPI Devices"
+        depends on WANT_GPIO_SPI
+    config WANT_ADXL345
+        bool "Support ADXL345 Accelerometer"
+        depends on WANT_GPIO_SPI
+    config WANT_LIS2DW
+        bool "Support LIS2DW 3-axis Accelerometer"
+        depends on WANT_GPIO_SPI
+    config WANT_ANGLE_SENSOR
+        bool "Support Angle Sensors (A1333, AS5047D, TLE5012B)"
+        depends on WANT_GPIO_SPI
+    config WANT_SOFTWARE_SPI
+        bool "Support Software Based SPI \"bit-banging\""
+        depends on HAVE_GPIO && WANT_GPIO_SPI
+    config WANT_GPIO_SDIO
+        bool "Support SDIO Devices"
+        depends on HAVE_GPIO_SDIO
+    config WANT_GPIO_HARD_PWM
+        bool "Support Hardware PWM"
+        depends on HAVE_GPIO_HARD_PWM
+    config WANT_BUTTONS
+        bool "Support GPIO Buttons"
+        depends on HAVE_GPIO
+    config WANT_TMCUART
+        bool "Support TMC UART"
+        depends on HAVE_GPIO
+    config WANT_NEOPIXEL
+        bool "Support NeoPixels"
+        depends on HAVE_GPIO
+    config WANT_PULSE_COUNTER
+        bool "Support Pulse Counter"
+        depends on HAVE_GPIO
+    config WANT_DISPLAYS
+        bool "Support LCD Devices"
+        depends on HAVE_GPIO
 endmenu
 
 # Generic configuration options for CANbus

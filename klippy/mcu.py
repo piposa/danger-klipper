@@ -549,10 +549,9 @@ class MCU_pwm:
         if mdur_ticks >= 1 << 31:
             raise pins.error("PWM pin max duration too large")
         if self._hardware_pwm:
-            try:
-                self._pwm_max = self._mcu.get_constant_float("PWM_MAX")
-            except:
-                self._pwm_max = DEFAULT_PWM_MAX
+            self._pwm_max = self._mcu.get_constant_float(
+                "PWM_MAX", default=DEFAULT_PWM_MAX
+            )
             self._mcu.request_move_queue_slot()
             self._oid = self._mcu.create_oid()
             self._mcu.add_config_cmd(
@@ -667,10 +666,9 @@ class MCU_adc:
         )
         clock = self._mcu.get_query_slot(self._oid)
         sample_ticks = self._mcu.seconds_to_clock(self._sample_time)
-        try:
-            mcu_adc_max = self._mcu.get_constant_float("ADC_MAX")
-        except:
-            mcu_adc_max = DEFAULT_ADC_MAX
+        mcu_adc_max = self._mcu.get_constant_float(
+            "ADC_MAX", default=DEFAULT_ADC_MAX
+        )
         max_adc = self._sample_count * mcu_adc_max
         self._inv_max_adc = 1.0 / max_adc
         self._report_clock = self._mcu.seconds_to_clock(self._report_time)
@@ -1120,8 +1118,10 @@ class MCU:
     def get_constants(self):
         return self._serial.get_msgparser().get_constants()
 
-    def get_constant_float(self, name):
-        return self._serial.get_msgparser().get_constant_float(name)
+    def get_constant_float(self, name, default=None):
+        return self._serial.get_msgparser().get_constant_float(
+            name, default=default
+        )
 
     def print_time_to_clock(self, print_time):
         return self._clocksync.print_time_to_clock(print_time)
