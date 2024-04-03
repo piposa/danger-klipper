@@ -925,6 +925,17 @@ class MCU:
         # Build config commands
         for cb in self._config_callbacks:
             cb()
+
+        # oid count is 0, but we have config cmds.
+        # figure out the oid count from the config cmds
+        if self._oid_count == 0 and len(self._config_cmds) != 0:
+            unique_oids = set()
+            for cmd in self._config_cmds:
+                if "oid=" not in cmd:
+                    continue
+                oid = cmd.split(" oid=")[1][0]
+                unique_oids.add(oid)
+            self._oid_count = len(unique_oids)
         self._config_cmds.insert(
             0, "allocate_oids count=%d" % (self._oid_count,)
         )
