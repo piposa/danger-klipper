@@ -139,12 +139,21 @@ class SerialReader:
         if uuid < 0 or uuid > 0xFFFFFFFFFFFF:
             self._error("Invalid CAN uuid")
         uuid = [(uuid >> (40 - i * 8)) & 0xFF for i in range(6)]
+
         CANBUS_ID_ADMIN = 0x3F0
-        CMD_SET_NODEID = 0x01
-        set_id_cmd = [CMD_SET_NODEID] + uuid + [canbus_nodeid]
-        set_id_msg = can.Message(
+        CMD_QUERY_UNASSIGNED = 0x00
+        RESP_NEED_NODEID = 0x20
+        filters = [
+            {
+                "can_id": CANBUS_ID_ADMIN + 1,
+                "can_mask": 0x7FF,
+                "extended": False,
+            }
+        ]
+
+        msg = can.Message(
             arbitration_id=CANBUS_ID_ADMIN,
-            data=set_id_cmd,
+            data=[CMD_QUERY_UNASSIGNED],
             is_extended_id=False,
         )
         try:
@@ -153,22 +162,33 @@ class SerialReader:
                 can_filters=filters,
                 bustype="socketcan",
             )
-            bus.send(set_id_msg)
+            bus.send(msg)
         except (can.CanError, os.error) as e:
             return False
-        bus.close = bus.shutdown  # XXX
-        ret = self._start_session(bus, b"c", txid)
-        if not ret:
-            return False
-        # Verify correct canbus_nodeid to canbus_uuid mapping
-        try:
-            params = self.send_with_response("get_canbus_id", "canbus_id")
-            got_uuid = bytearray(params["canbus_uuid"])
-            if got_uuid == bytearray(uuid):
+
+        start_time = curtime = self.reactor.monotonic()
+        while 1:
+            tdiff = start_time + 1.0 - curtime
+            if tdiff <= 0.0:
+                break
+            msg = bus.recv(tdiff)
+            curtime = self.reactor.monotonic()
+            if (
+                msg is None
+                or msg.arbitration_id != CANBUS_ID_ADMIN + 1
+                or msg.dlc < 7
+                or msg.data[0] != RESP_NEED_NODEID
+            ):
+                continue
+            found_uuid = sum(
+                [v << ((5 - i) * 8) for i, v in enumerate(msg.data[1:7])]
+            )
+            if found_uuid == uuid:
                 self.disconnect()
+                bus.close = bus.shutdown  # XXX
                 return True
-        except:
-            return False
+        bus.close = bus.shutdown  # XXX
+        return False
 
     def connect_canbus(self, canbus_uuid, canbus_nodeid, canbus_iface="can0"):
         import can  # XXX
