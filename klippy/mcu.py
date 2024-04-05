@@ -922,7 +922,7 @@ class MCU:
         self._reactor.update_timer(
             self.non_critical_recon_timer, self._reactor.NOW
         )
-        logging.info("mcu: %s disconnected", self._name)
+        self.gcode.respond_info(f"mcu: '{self._name}' disconnected!", log=True)
 
     def non_critical_recon_event(self, eventtime):
         success = self.recon_mcu()
@@ -1038,7 +1038,6 @@ class MCU:
         self.reset_to_initial_state()
         self.non_critical_disconnected = False
         self._connect()
-        logging.info("mcu: %s reconnected", self._name)
         return True
 
     def reset_to_initial_state(self):
