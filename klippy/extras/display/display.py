@@ -234,7 +234,7 @@ class PrinterLCD:
         # Screen updating
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
         self.printer.register_event_handler(
-            self.lcd_chip.mcu.non_critical_reconnect_event_name,
+            self.lcd_chip.mcu.get_non_critical_reconnect_event_name(),
             self.handle_reconnect,
         )
         self.screen_update_timer = self.reactor.register_timer(
