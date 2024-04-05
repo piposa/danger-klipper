@@ -825,8 +825,11 @@ class MCU:
         self.reconnect_interval = (
             config.getfloat("reconnect_interval", 2.0) + 0.12
         )  # add small change to not collide with other events
-        self._oid_count_post_inits = None
-
+        self._cached_init_state = False
+        self._oid_count_post_inits = 0
+        self._config_cmds_post_inits = []
+        self._init_cmds_post_inits = []
+        self._restart_cmds_post_inits = []
         # Register handlers
         printer.register_event_handler(
             "klippy:firmware_restart", self._firmware_restart
@@ -932,10 +935,14 @@ class MCU:
             return eventtime + self.reconnect_interval
 
     def _send_config(self, prev_crc):
-        if self._oid_count_post_inits is None:
+        if not self._cached_init_state:
             # first time config, we haven't created callback oids yet
             # so save the oid count for state reset later
             self._oid_count_post_inits = self._oid_count
+            self._config_cmds_post_inits = self._config_cmds.copy()
+            self._init_cmds_post_inits = self._init_cmds.copy()
+            self._restart_cmds_post_inits = self._restart_cmds.copy()
+            self._cached_init_state = True
         # Build config commands
         for cb in self._config_callbacks:
             cb()
@@ -1035,7 +1042,11 @@ class MCU:
         return True
 
     def reset_to_initial_state(self):
-        self._oid_count = self._oid_count_post_inits
+        if self._cached_init_state:
+            self._oid_count = self._oid_count_post_inits
+            self._config_cmds = self._config_cmds_post_inits.copy()
+            self._init_cmds = self._init_cmds_post_inits.copy()
+            self._restart_cmds = self._restart_cmds_post_inits.copy()
         self._reserved_move_slots = 0
         self._steppersync = None
 
@@ -1170,11 +1181,11 @@ class MCU:
         self._config_callbacks.append(cb)
 
     def add_config_cmd(self, cmd, is_init=False, on_restart=False):
-        if is_init and cmd not in self._init_cmds:
+        if is_init:
             self._init_cmds.append(cmd)
-        elif on_restart and cmd not in self._restart_cmds:
+        elif on_restart:
             self._restart_cmds.append(cmd)
-        elif cmd not in self._config_cmds:
+        else:
             self._config_cmds.append(cmd)
 
     def get_query_slot(self, oid):
