@@ -816,12 +816,13 @@ class MCU:
         self._mcu_tick_awake = 0.0
 
         # noncritical mcus
-        self.non_critical_recon_timer = self._reactor.register_timer(
-            self.non_critical_recon_event
-        )
         self.is_non_critical = config.getboolean("is_non_critical", False)
         if self.is_non_critical and self.get_name() == "mcu":
             raise error("Primary MCU cannot be marked as non-critical!")
+        if self.is_non_critical:
+            self.non_critical_recon_timer = self._reactor.register_timer(
+                self.non_critical_recon_event
+            )
         self.non_critical_disconnected = False
         self._non_critical_reconnect_event_name = (
             f"danger:non_critical_mcu_{self.get_name()}:reconnected"
@@ -1106,7 +1107,14 @@ class MCU:
 
     def _check_serial_exists(self):
         rts = self._restart_method != "cheetah"
-        return self._serial.check_connect(self._serialport, self._baud, rts)
+        if self._canbus_iface is not None:
+            cbid = self._printer.lookup_object("canbus_ids")
+            nodeid = cbid.get_nodeid(self._serialport)
+            return self._serial.check_canbus_connect(
+                self._serialport, nodeid, self._canbus_iface
+            )
+        else:
+            return self._serial.check_connect(self._serialport, self._baud, rts)
 
     def _mcu_identify(self):
         if self.is_non_critical and not self._check_serial_exists():

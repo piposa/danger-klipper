@@ -124,6 +124,52 @@ class SerialReader:
             )
         return True
 
+    def check_canbus_connect(
+        self, canbus_uuid, canbus_nodeid, canbus_iface="can0"
+    ):
+        import can  # XXX
+
+        txid = canbus_nodeid * 2 + 256
+        filters = [{"can_id": txid + 1, "can_mask": 0x7FF, "extended": False}]
+        # Prep for SET_NODEID command
+        try:
+            uuid = int(canbus_uuid, 16)
+        except ValueError:
+            uuid = -1
+        if uuid < 0 or uuid > 0xFFFFFFFFFFFF:
+            self._error("Invalid CAN uuid")
+        uuid = [(uuid >> (40 - i * 8)) & 0xFF for i in range(6)]
+        CANBUS_ID_ADMIN = 0x3F0
+        CMD_SET_NODEID = 0x01
+        set_id_cmd = [CMD_SET_NODEID] + uuid + [canbus_nodeid]
+        set_id_msg = can.Message(
+            arbitration_id=CANBUS_ID_ADMIN,
+            data=set_id_cmd,
+            is_extended_id=False,
+        )
+        try:
+            bus = can.interface.Bus(
+                channel=canbus_iface,
+                can_filters=filters,
+                bustype="socketcan",
+            )
+            bus.send(set_id_msg)
+        except (can.CanError, os.error) as e:
+            return False
+        bus.close = bus.shutdown  # XXX
+        ret = self._start_session(bus, b"c", txid)
+        if not ret:
+            return False
+        # Verify correct canbus_nodeid to canbus_uuid mapping
+        try:
+            params = self.send_with_response("get_canbus_id", "canbus_id")
+            got_uuid = bytearray(params["canbus_uuid"])
+            if got_uuid == bytearray(uuid):
+                self.disconnect()
+                return True
+        except:
+            return False
+
     def connect_canbus(self, canbus_uuid, canbus_nodeid, canbus_iface="can0"):
         import can  # XXX
 
