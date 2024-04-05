@@ -1106,7 +1106,7 @@ class MCU:
         self._printer.set_rollover_info(self._name, log_info, log=False)
 
     def _check_serial_exists(self):
-        rts = self._restart_method != "cheetah"
+
         if self._canbus_iface is not None:
             cbid = self._printer.lookup_object("canbus_ids")
             nodeid = cbid.get_nodeid(self._serialport)
@@ -1114,6 +1114,7 @@ class MCU:
                 self._serialport, nodeid, self._canbus_iface
             )
         else:
+            rts = self._restart_method != "cheetah"
             return self._serial.check_connect(self._serialport, self._baud, rts)
 
     def _mcu_identify(self):
