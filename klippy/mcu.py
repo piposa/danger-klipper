@@ -944,17 +944,33 @@ class MCU:
         #         oid = cmd.split(" oid=")[1][0]
         #         unique_oids.add(oid)
         #     self._oid_count = len(unique_oids)
-        allocated_oids = False
+
+        _config_commands_raw = []
+        prev_oid_count = -1
+        unique_oids = set()
         for cmd in self._config_cmds:
             if "allocate_oids" in cmd:
-                self._oid_count = int(cmd.split("count=")[1])
-                allocated_oids = True
-                break
-        if not allocated_oids:
-            self._config_cmds.insert(
-                0, "allocate_oids count=%d" % (self._oid_count,)
-            )
+                prev_oid_count = int(cmd.split("count=")[1])
+                continue
+            if "finalize_config" in cmd:
+                continue
+            if "oid=" in cmd:
+                oid = cmd.split(" oid=")[1].split(" ")[0]
+                unique_oids.add(oid)
+            _config_commands_raw.append(cmd)
+
+        counted_oids = len(unique_oids)
         logging.info("config_cmds: %s", self._config_cmds)
+
+        if prev_oid_count != -1 and prev_oid_count != counted_oids:
+            raise error(
+                f"MCU '{self._name}' oid count does not match config. (prev: {prev_oid_count} != counted: {counted_oids}"
+            )
+        self._oid_count = counted_oids
+        _config_commands_raw.insert(
+            0, "allocate_oids count=%d" % (self._oid_count,)
+        )
+        self._config_cmds = _config_commands_raw.copy()
 
         # Resolve pin names
         mcu_type = self._serial.get_msgparser().get_constant("MCU")
