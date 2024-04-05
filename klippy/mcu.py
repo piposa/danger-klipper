@@ -820,7 +820,15 @@ class MCU:
             self.non_critical_recon_event
         )
         self.is_non_critical = config.getboolean("is_non_critical", False)
+        if self.is_non_critical and self.get_name() == "mcu":
+            raise error("Primary MCU cannot be marked as non-critical!")
         self.non_critical_disconnected = False
+        self.non_critical_reconnect_event_name = (
+            f"danger:non_critical_mcu_{self.get_name()}:reconnected"
+        )
+        self.non_critical_disconnect_event_name = (
+            f"danger:non_critical_mcu_{self.get_name()}:disconnected"
+        )
         # self.last_noncrit_recon_eventtime = None
         self.reconnect_interval = (
             config.getfloat("reconnect_interval", 2.0) + 0.12
@@ -922,6 +930,7 @@ class MCU:
         self._reactor.update_timer(
             self.non_critical_recon_timer, self._reactor.NOW
         )
+        self._printer.send_event(self.non_critical_disconnect_event_name)
         self.gcode.respond_info(f"mcu: '{self._name}' disconnected!", log=True)
 
     def non_critical_recon_event(self, eventtime):
@@ -1038,6 +1047,7 @@ class MCU:
         self.reset_to_initial_state()
         self.non_critical_disconnected = False
         self._connect()
+        self._printer.send_event(self.non_critical_reconnect_event_name)
         return True
 
     def reset_to_initial_state(self):
