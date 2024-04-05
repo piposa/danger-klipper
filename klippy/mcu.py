@@ -825,6 +825,7 @@ class MCU:
         self.reconnect_interval = (
             config.getfloat("reconnect_interval", 2.0) + 0.12
         )  # add small change to not collide with other events
+        self._oid_count_post_inits = None
 
         # Register handlers
         printer.register_event_handler(
@@ -931,60 +932,33 @@ class MCU:
             return eventtime + self.reconnect_interval
 
     def _send_config(self, prev_crc):
+        if self._oid_count_post_inits is None:
+            # first time config, we haven't created callback oids yet
+            # so save the oid count for state reset later
+            self._oid_count_post_inits = self._oid_count
         # Build config commands
         for cb in self._config_callbacks:
             cb()
 
-        # # oid count is 0, but we have config cmds.
-        # # figure out the oid count from the config cmds
-        # if self._oid_count == 0 and len(self._config_cmds) != 0:
-        #     unique_oids = set()
-        #     for cmd in self._config_cmds:
-        #         if "oid=" not in cmd:
-        #             continue
-        #         oid = cmd.split(" oid=")[1][0]
-        #         unique_oids.add(oid)
-        #     self._oid_count = len(unique_oids)
+        local_config_cmds = self._config_cmds.copy()
 
-        _config_commands_raw = []
-        prev_oid_count = -1
-        unique_oids = set()
-        for cmd in self._config_cmds:
-            if "allocate_oids" in cmd:
-                prev_oid_count = int(cmd.split("count=")[1])
-                continue
-            if "finalize_config" in cmd:
-                continue
-            if "oid=" in cmd:
-                oid = cmd.split(" oid=")[1].split(" ")[0]
-                unique_oids.add(oid)
-            _config_commands_raw.append(cmd)
-
-        counted_oids = len(unique_oids)
-        logging.info("config_cmds: %s", self._config_cmds)
-
-        if prev_oid_count != -1 and prev_oid_count != counted_oids:
-            raise error(
-                f"MCU '{self._name}' oid count does not match config. (prev: {prev_oid_count} != counted: {counted_oids}"
-            )
-        self._oid_count = counted_oids
-        _config_commands_raw.insert(
+        local_config_cmds.insert(
             0, "allocate_oids count=%d" % (self._oid_count,)
         )
-        self._config_cmds = _config_commands_raw.copy()
+        logging.info("config_cmds: %s", local_config_cmds)
 
         # Resolve pin names
         mcu_type = self._serial.get_msgparser().get_constant("MCU")
         ppins = self._printer.lookup_object("pins")
         pin_resolver = ppins.get_pin_resolver(self._name)
-        for cmdlist in (self._config_cmds, self._restart_cmds, self._init_cmds):
+        for cmdlist in (local_config_cmds, self._restart_cmds, self._init_cmds):
             for i, cmd in enumerate(cmdlist):
                 cmdlist[i] = pin_resolver.update_command(cmd)
                 logging.info("command: %s", cmdlist[i])
         # Calculate config CRC
-        encoded_config = "\n".join(self._config_cmds).encode()
+        encoded_config = "\n".join(local_config_cmds).encode()
         config_crc = zlib.crc32(encoded_config) & 0xFFFFFFFF
-        self.add_config_cmd("finalize_config crc=%d" % (config_crc,))
+        local_config_cmds.append("finalize_config crc=%d" % (config_crc,))
         if prev_crc is not None and config_crc != prev_crc:
             self._check_restart("CRC mismatch")
             raise error("MCU '%s' CRC does not match config" % (self._name,))
@@ -995,7 +969,7 @@ class MCU:
                 logging.info(
                     "Sending MCU '%s' printer configuration...", self._name
                 )
-                for c in self._config_cmds:
+                for c in local_config_cmds:
                     self._serial.send(c)
             else:
                 for c in self._restart_cmds:
@@ -1061,7 +1035,7 @@ class MCU:
         return True
 
     def reset_to_initial_state(self):
-        self._oid_count = 0
+        self._oid_count = self._oid_count_post_inits
         self._reserved_move_slots = 0
         self._steppersync = None
 
